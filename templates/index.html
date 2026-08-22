@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+    <head>
+        <title>Controle dos Excessos</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    </head>
+    <body>
+
+        
+        
+        <h1>Controle dos Excessos</h1>
+
+        <section class="introducao">
+            
+            
+            <h2>Como Utilizar?</h2>
+
+            <p>Utilize esse formulario para registrar a entrada e saida dos tênis nos excessos.
+
+            </p>
+            <p>Informe o modelo, tamanho, a movimentação do tênis, e a quantidade. Após isso, clique em Confirmar Movimentação.
+
+            </p>
+        </section>
+
+        <form method="POST" action="/movimentar">
+            <label>Modelo do Tênis:</label>
+            <input type="text" name="modelo" placeholder="Ex: V-90 Extra White">
+
+            <label>Tamanho/Número do Tênis:</label>
+            <input type="number" name="tamanho" placeholder="Ex 34">
+
+            <label>Movimentação:</label>
+            <select name="movimentacao">
+                <option>Entrada</option>
+                <option>Saída</option>   
+            </select>
+
+            <label>Quantidade:</label>
+            <input type="number" name="quantidade" value="1">
+
+        <button type="submit">Confirmar Movimentação
+
+        </button>
+        
+        
+        </form>
+    </body>
+</html>
