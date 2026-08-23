@@ -4,3 +4,4 @@ venv/
 .env
 *.code-workspace
 estoque.db
+Sistema Estoque.xlsb
