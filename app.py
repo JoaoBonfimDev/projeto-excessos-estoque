@@ -21,7 +21,47 @@ def inicio():
     return render_template('index.html')
 @app.route("/consulta")
 def consulta():
-    return render_template("consulta.html")
+
+    modelo_pesquisado = request.args.get("modelo", "")
+
+    conexao = sqlite3.connect("estoque.db")
+
+    if modelo_pesquisado:
+        produtos = conexao.execute(
+            """
+            SELECT modelo, tamanho, quantidade
+            FROM estoque
+            WHERE modelo LIKE ?
+            ORDER BY modelo, tamanho
+            """,
+            (f"%{modelo_pesquisado}%",)
+        ).fetchall()
+
+    else:
+        produtos = []
+
+    produtos_agrupados ={}
+
+    for produto in produtos:
+
+        modelo = produto[0]
+        tamanho = produto[1]
+        quantidade = produto[2]
+        if modelo not in produtos_agrupados:
+            produtos_agrupados[modelo] = []
+
+        produtos_agrupados[modelo].append(
+            (tamanho,quantidade)
+        )
+
+    conexao.close()
+
+    return render_template(
+        "consulta.html",
+        produtos=produtos,
+        produtos_agrupados=produtos_agrupados,
+        modelo_pesquisado=modelo_pesquisado
+    )
 
 @app.route("/movimentar", methods=["POST"])
 def movimentar():

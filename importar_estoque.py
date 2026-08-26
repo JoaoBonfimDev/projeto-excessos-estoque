@@ -1,4 +1,6 @@
 import pandas as pd
+import sqlite3
+
 
 arquivo = "Sistema Estoque.xlsb"
 
@@ -68,3 +70,57 @@ print(tamanhos_suspeitos)
 
 print(f"\nTotal com Físico negativo: {len(fisico_negativo)}")
 print(f"Total com tamanho suspeito: {len(tamanhos_suspeitos)}")
+
+
+conexao = sqlite3.connect("estoque.db")
+
+inseridos = 0
+atualizados = 0
+
+for _, produto in dados_estoque.iterrows():
+
+    modelo = produto["Modelo"]
+    tamanho = int(produto["Tamanho"])
+    quantidade = int(produto["Físico"])
+
+    produto_banco = conexao.execute(
+        """
+        SELECT * FROM estoque
+        WHERE modelo = ? AND tamanho = ?
+        """,
+        (modelo, tamanho)
+    ).fetchone()
+
+    if produto_banco is None:
+        conexao.execute(
+            """
+            INSERT INTO estoque (modelo, tamanho, quantidade)
+            VALUES (?, ?, ?)
+            """,
+            (modelo, tamanho, quantidade)
+        )
+
+        inseridos += 1
+
+    else:
+        conexao.execute(
+            """
+            UPDATE estoque
+            SET quantidade = ?
+            WHERE modelo = ? AND tamanho = ?
+            """,
+            (quantidade, modelo, tamanho)
+        )
+
+        atualizados += 1
+
+conexao.commit()
+conexao.close()
+
+print("\nSincronização concluída!")
+print(f"Produtos inseridos: {inseridos}")
+print(f"Produtos atualizados: {atualizados}")
+
+
+
+
