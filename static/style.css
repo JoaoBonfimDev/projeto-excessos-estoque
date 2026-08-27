@@ -186,11 +186,23 @@ button:hover{
 
 .modelos-destaque {
     display: flex;
-    justify-content: center;
-    gap: 20px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
 
-    margin-top: 25px;
+    justify-content: flex-start;
+
+    overflow-x: auto;
+
+    gap: 15px;
+
+    padding: 10px 15px 20px 15px;
+
+    scroll-snap-type: x mandatory;
+   margin-top: 25px;
+}
+.card-modelo {
+    flex: 0 0 160px;
+
+    scroll-snap-align: start;
 }
 
 .card-modelo {
