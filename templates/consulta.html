@@ -5,26 +5,51 @@
 <head>
     <meta charset="UTF-8">
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <title>Consulta de Estoque</title>
+    <title>
+        Consulta de Estoque
+    </title>
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
 </head>
 
-<body>
-    <nav class="menu-principal">
-    <a href="/">Início</a>
-    <a href="/consulta">Consultar Estoque</a>
-</nav>
 
-    <h1>Consulta de Estoque</h1>
+<body>
+
+    <nav class="menu-principal">
+
+        <a href="/">
+            Início
+        </a>
+
+        <a href="/consulta">
+            Consultar Estoque
+        </a>
+
+    </nav>
+
+
+    <h1>
+        Consulta de Estoque
+    </h1>
+
 
     <p>
-        Pesquise um modelo para consultar os tamanhos e quantidades disponíveis.
+        Pesquise um modelo para consultar a grade de tamanhos disponível.
     </p>
 
-    <form action="{{ url_for('consulta') }}" method="get">
+
+    <form
+        action="{{ url_for('consulta') }}"
+        method="get"
+    >
 
         <input
             type="text"
@@ -37,53 +62,96 @@
         </button>
 
     </form>
+
+
     {% if not modelo_pesquisado %}
 
-    <h2>Pode ser do seu interesse</h2>
-<div class="modelos-destaque">
+        <h2>
+            Pode ser do seu interesse
+        </h2>
 
-    <a class="card-modelo" href="/consulta?modelo=RECIFE">
-        <img
-            src="{{ url_for('static', filename='imagens/recife.png') }}"
-            alt="RECIFE"
-        >
-        <span>RECIFE</span>
-    </a>
 
-    <a class="card-modelo" href="/consulta?modelo=V-90">
-        <img
-            src="{{ url_for('static', filename='imagens/v90.png') }}"
-            alt="V-90"
-        >
-        <span>V-90</span>
-    </a>
+        <div class="modelos-destaque">
 
-    <a class="card-modelo" href="/consulta?modelo=CAMPO">
-        <img
-            src="{{ url_for('static', filename='imagens/campo.png') }}"
-            alt="CAMPO"
-        >
-        <span>CAMPO</span>
-    </a>
+            <a
+                class="card-modelo"
+                href="/consulta?modelo=RECIFE"
+            >
 
-    <a class="card-modelo" href="/consulta?modelo=V-10">
-        <img
-            src="{{ url_for('static', filename='imagens/v10.png') }}"
-            alt="V-10"
-        >
-        <span>V-10</span>
-    </a>
+                <img
+                    src="{{ url_for('static', filename='imagens/recife.png') }}"
+                    alt="RECIFE"
+                >
 
-</div>
+                <span>
+                    RECIFE
+                </span>
 
-{% endif %}
+            </a>
+
+
+            <a
+                class="card-modelo"
+                href="/consulta?modelo=V-90"
+            >
+
+                <img
+                    src="{{ url_for('static', filename='imagens/v90.png') }}"
+                    alt="V-90"
+                >
+
+                <span>
+                    V-90
+                </span>
+
+            </a>
+
+
+            <a
+                class="card-modelo"
+                href="/consulta?modelo=CAMPO"
+            >
+
+                <img
+                    src="{{ url_for('static', filename='imagens/campo.png') }}"
+                    alt="CAMPO"
+                >
+
+                <span>
+                    CAMPO
+                </span>
+
+            </a>
+
+
+            <a
+                class="card-modelo"
+                href="/consulta?modelo=V-10"
+            >
+
+                <img
+                    src="{{ url_for('static', filename='imagens/v10.png') }}"
+                    alt="V-10"
+                >
+
+                <span>
+                    V-10
+                </span>
+
+            </a>
+
+        </div>
+
+    {% endif %}
 
 
     {% if modelo_pesquisado %}
 
         <h2>
-            Resultados para: {{ modelo_pesquisado }}
+            Resultados para:
+            {{ modelo_pesquisado }}
         </h2>
+
 
         {% if produtos_agrupados %}
 
@@ -93,32 +161,41 @@
                     {{ modelo }}
                 </h3>
 
-                <div class="cabecalho-tamanhos">
-                    <span>Tamanho</span>
-                    <span>Quantidade</span>
-                </div>
 
-                <div class="tamanhos-modelo">
+                <p>
 
-                    {% for tamanho, quantidade in tamanhos %}
+                    Grade:
 
-                        <div class="tamanho-item">
+                    {{ grades[modelo]["menor"] }}
 
-                            <span class="numero-tamanho">
-                                {{ tamanho }}
-                            </span>
+                    –
 
-                            <span class="quantidade-tamanho">
-                                {{ quantidade }}
-                            </span>
+                    {{ grades[modelo]["maior"] }}
 
-                        </div>
+                </p>
 
-                    {% endfor %}
 
-                </div>
+                {% if grades[modelo]["faltantes"] %}
+
+                    <p>
+
+                        Não constam:
+
+                        {{ grades[modelo]["faltantes"] | join(", ") }}
+
+                    </p>
+
+                {% else %}
+
+                    <p>
+                        Grade completa
+                    </p>
+
+                {% endif %}
+
 
             {% endfor %}
+
 
         {% else %}
 
@@ -128,7 +205,9 @@
 
         {% endif %}
 
+
     {% endif %}
+
 
 </body>
 
