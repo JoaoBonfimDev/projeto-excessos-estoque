@@ -7,6 +7,18 @@ app = Flask(__name__)
 
 
 # ============================================================
+# GRADES ESPECIAIS DOS MODELOS
+# ============================================================
+
+GRADES_MODELOS = {
+    "CONDOR 3 OFF ROAD": (33, 45),
+    "CONDOR 3": (33, 46),
+    "V-90": (33, 46),
+    "ATLAS": (33, 46),
+}
+
+
+# ============================================================
 # NORMALIZAÇÃO DA PESQUISA
 # ============================================================
 
@@ -226,17 +238,40 @@ def consulta():
 
 
         # ----------------------------------------------------
-        # MODELOS NORMAIS
+        # MODELOS NORMAIS E GRADES ESPECIAIS
         # ----------------------------------------------------
 
         else:
 
-            grade_esperada = list(
-                range(
-                    menor_tamanho,
-                    maior_tamanho + 1
+            grade_especial = None
+
+            for nome_grade, intervalo in GRADES_MODELOS.items():
+
+                if nome_grade in nome_modelo:
+
+                    grade_especial = intervalo
+                    break
+
+
+            if grade_especial:
+
+                inicio_grade, fim_grade = grade_especial
+
+                grade_esperada = list(
+                    range(
+                        inicio_grade,
+                        fim_grade + 1
+                    )
                 )
-            )
+
+            else:
+
+                grade_esperada = list(
+                    range(
+                        menor_tamanho,
+                        maior_tamanho + 1
+                    )
+                )
 
 
         # ----------------------------------------------------
@@ -252,9 +287,13 @@ def consulta():
 
         grades[modelo] = {
 
-            "menor": menor_tamanho,
+            "menor": (
+                grade_esperada[0]
+            ),
 
-            "maior": maior_tamanho,
+            "maior": (
+                grade_esperada[-1]
+            ),
 
             "faltantes": tamanhos_faltantes
         }

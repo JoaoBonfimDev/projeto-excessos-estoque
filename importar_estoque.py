@@ -49,6 +49,7 @@ df = df[
 
 df["Tamanho"] = df["Tamanho"].astype(int)
 df["Físico"] = df["Físico"].astype(int)
+df = df[df["Físico"] >= 1]
 
 
 # ============================================================
@@ -157,6 +158,16 @@ conexao = psycopg.connect(
 )
 
 print("Conexão realizada com sucesso!")
+conexao.execute(
+    """
+    DELETE FROM estoque
+    WHERE quantidade <= 0
+    """
+)
+
+conexao.commit()
+
+print("Produtos com quantidade 0 removidos do banco.")
 
 
 # ============================================================
@@ -238,8 +249,45 @@ with conexao.cursor() as cursor:
         produtos
     )
 
+    cursor.execute(
+        """
+        SELECT modelo, tamanho
+        FROM estoque
+        """
+    )
+
+    produtos_banco = cursor.fetchall()
+
+    produtos_validos = {
+        (modelo, tamanho)
+        for modelo, tamanho, quantidade in produtos
+    }
+
+    produtos_para_remover = [
+        (modelo, tamanho)
+        for modelo, tamanho in produtos_banco
+        if (modelo, tamanho) not in produtos_validos
+    ]
+    if produtos_para_remover:
+        cursor.executemany(
+            """
+            DELETE FROM estoque
+            WHERE modelo = %s
+            AND tamanho = %s
+            """,
+            produtos_para_remover
+        )
+
+        print(
+            f"{len(produtos_para_remover)} produtos removidos do banco."
+        )
+    else:
+        print("Nenhum produto precisou ser removido.")
 
 conexao.commit()
+
+
+
 
 
 # ============================================================
