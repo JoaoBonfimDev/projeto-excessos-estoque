@@ -1,16 +1,18 @@
 # Projeto Excessos do Estoque
 
-Aplicação web desenvolvida para praticar conceitos de desenvolvimento front-end, back-end, tratamento de dados e banco de dados através de um sistema de controle e consulta de estoque.
+Aplicação web desenvolvida para praticar conceitos de desenvolvimento front-end, back-end, tratamento de dados, banco de dados e deploy através de um sistema de controle e consulta de estoque.
 
 ## Sobre o projeto
 
 A ideia deste projeto surgiu a partir da observação de uma necessidade real no ambiente de varejo: facilitar o registro de entradas e saídas de produtos excedentes do estoque e permitir uma consulta simples das quantidades disponíveis.
 
-O objetivo é desenvolver uma interface intuitiva para que vendedores e assistentes possam registrar movimentações informando modelo, tamanho, tipo de movimentação e quantidade.
+O sistema permite que vendedores e assistentes registrem movimentações informando modelo, tamanho, tipo de movimentação e quantidade.
 
-Além das movimentações, o projeto passou a utilizar dados provenientes de uma planilha de estoque, realizando o tratamento dessas informações e armazenando os resultados em um banco de dados local.
+Além das movimentações, a aplicação utiliza dados provenientes de uma planilha de estoque no formato `.xlsb`. Esses dados são tratados com Python e Pandas antes de serem sincronizados com um banco PostgreSQL.
 
-O projeto está em desenvolvimento e faz parte do meu processo de aprendizado em programação, análise de dados e desenvolvimento de aplicações com Python.
+A aplicação está atualmente hospedada no Render e utiliza um banco PostgreSQL hospedado no Neon.
+
+O projeto continua em desenvolvimento e faz parte do meu processo de aprendizado em programação, análise de dados e desenvolvimento de aplicações web com Python.
 
 ## Funcionalidades atuais
 
@@ -19,116 +21,243 @@ O projeto está em desenvolvimento e faz parte do meu processo de aprendizado em
 - Controle por modelo, tamanho e quantidade
 - Comunicação entre formulários HTML e back-end Flask
 - Processamento dos dados enviados pelos formulários
-- Importação de dados de estoque utilizando Pandas
-- Leitura de arquivo no formato `.xlsb`
+- Importação de dados utilizando Pandas
+- Leitura de arquivos `.xlsb`
 - Tratamento e validação de modelos, tamanhos e quantidades
 - Agrupamento de registros por modelo e tamanho
-- Armazenamento dos dados tratados em banco SQLite
-- Inserção de novos produtos no banco de dados
-- Atualização das quantidades de produtos já existentes
-- Consulta dos produtos armazenados no banco através da aplicação Flask
-- Pesquisa de estoque por nome do modelo
-- Busca parcial de modelos utilizando SQL
+- Sincronização dos dados com PostgreSQL
+- Inserção de novos produtos
+- Atualização das quantidades de produtos existentes
+- Remoção de registros que não estão mais presentes na fonte de dados
+- Consulta dos produtos através da aplicação Flask
+- Pesquisa de estoque pelo nome do modelo
+- Busca parcial de modelos
 - Agrupamento dos resultados por modelo e variação
-- Exibição dos tamanhos e respectivas quantidades
-- Navegação entre a página de movimentação e a consulta de estoque
-- Modelos em destaque na página de consulta
+- Identificação das grades de tamanhos
+- Tratamento de grades especiais para determinados modelos
+- Navegação entre movimentação e consulta de estoque
 - Interface adaptada para computadores e celulares
+- Aplicação publicada na web através do Render
+- Banco de dados PostgreSQL hospedado no Neon
+
+## Arquitetura atual
+
+Atualmente, o projeto utiliza serviços separados para código, aplicação e banco de dados.
+
+```text
+GitHub
+   |
+   | código-fonte
+   v
+Render
+   |
+   | Flask / Python
+   |
+   | DATABASE_URL
+   v
+Neon
+   |
+   v
+PostgreSQL
+```
+
+O Render é responsável pela execução da aplicação Flask.
+
+O Neon é responsável pelo armazenamento persistente dos dados através do PostgreSQL.
+
+A aplicação utiliza a variável de ambiente `DATABASE_URL` para estabelecer a conexão com o banco sem armazenar credenciais diretamente no código-fonte.
 
 ## Fluxo dos dados
 
-O estoque utilizado pela aplicação é inicialmente obtido a partir de uma planilha no formato `.xlsb`.
+O estoque utilizado pela aplicação é obtido inicialmente através de uma planilha no formato `.xlsb`.
 
-Os dados passam por um processo de tratamento utilizando Pandas, no qual são selecionadas e organizadas as informações necessárias para o sistema, principalmente:
+O processo de atualização segue aproximadamente este fluxo:
+
+```text
+Sistema Estoque.xlsb
+        |
+        v
+      Pandas
+        |
+        v
+Tratamento dos dados
+        |
+        v
+Agrupamento
+Modelo + Tamanho
+        |
+        v
+importar_estoque.py
+        |
+        v
+Neon PostgreSQL
+        |
+        v
+Flask no Render
+        |
+        v
+Página de consulta
+```
+
+Durante o tratamento são utilizadas principalmente as informações:
 
 - Modelo
 - Tamanho
 - Quantidade física
 
-A descrição original dos produtos contém informações de modelo e tamanho. Durante o tratamento, essas informações são separadas e convertidas para formatos adequados antes de serem utilizadas pela aplicação.
+A descrição original dos produtos contém informações de modelo e tamanho. O script separa essas informações e converte os valores para os formatos necessários.
 
-Registros correspondentes ao mesmo modelo e tamanho são agrupados, permitindo consolidar suas respectivas quantidades.
+Registros correspondentes ao mesmo modelo e tamanho são agrupados para consolidar suas quantidades.
 
-Após o tratamento, os dados são sincronizados com um banco de dados SQLite. O sistema verifica se determinado produto já existe no banco para decidir entre inserir um novo registro ou atualizar sua quantidade.
+Depois do tratamento, os registros são sincronizados com o PostgreSQL.
 
-A página de consulta utiliza Flask para acessar essas informações e permite que o usuário pesquise produtos pelo nome do modelo.
+## Sincronização do estoque
 
-Os resultados são agrupados por modelo e variação, exibindo os tamanhos e suas respectivas quantidades.
-
-O fluxo atual pode ser resumido da seguinte forma:
+A atualização dos dados é realizada através do script:
 
 ```text
-Planilha XLSB
-      |
-      v
-    Pandas
-      |
-      v
-Tratamento dos dados
-      |
-      v
-    SQLite
-      |
-      v
-     Flask
-      |
-      v
-Página de consulta
+importar_estoque.py
 ```
+
+O script:
+
+1. lê `Sistema Estoque.xlsb`;
+2. acessa a base de dados necessária;
+3. trata os nomes dos produtos;
+4. separa modelo e tamanho;
+5. valida os valores;
+6. agrupa registros correspondentes ao mesmo modelo e tamanho;
+7. conecta ao PostgreSQL;
+8. sincroniza os produtos com o banco.
+
+A sincronização utiliza uma combinação única de:
+
+```text
+Modelo + Tamanho
+```
+
+Quando um registro já existe, sua quantidade é atualizada.
+
+Quando não existe, um novo registro é criado.
+
+Produtos que não estão mais presentes nos dados processados também podem ser removidos durante a sincronização.
 
 ## Consulta de estoque
 
-A aplicação possui uma página dedicada à consulta dos produtos armazenados no banco de dados.
+A aplicação possui uma página dedicada à consulta dos produtos armazenados no banco.
 
 Em vez de exibir todos os registros de estoque de uma única vez, o usuário pode pesquisar pelo nome ou por parte do nome de um modelo.
 
-Por exemplo, uma pesquisa por:
+Por exemplo:
 
 ```text
 V-90
 ```
 
-pode retornar diferentes variações desse modelo.
+A pesquisa pode retornar diferentes variações desse modelo.
 
-Cada variação é apresentada separadamente, juntamente com seus tamanhos e respectivas quantidades.
+Os resultados são organizados por modelo e seus respectivos tamanhos, facilitando a consulta do estoque.
 
-Essa estrutura foi desenvolvida para tornar a consulta mais simples e evitar que o usuário precise navegar manualmente por uma grande quantidade de registros.
+O sistema também possui tratamento de grades para identificar os tamanhos esperados de determinados produtos.
+
+Alguns modelos possuem regras específicas de grade, enquanto categorias como produtos Baby, Small e acessórios possuem tratamentos próprios.
 
 ## Banco de dados
 
-O projeto utiliza SQLite para armazenamento local dos dados tratados.
+O projeto utiliza atualmente:
 
-A aplicação trabalha atualmente com operações como:
+**PostgreSQL**
 
-- `SELECT` para consulta de produtos
-- `INSERT` para inclusão de novos registros
-- `UPDATE` para atualização das quantidades
-- `DELETE` para remoção de registros quando necessário
+O banco de produção está hospedado no Neon e é acessado pela aplicação Flask através da variável de ambiente:
 
-O arquivo do banco de dados utilizado durante o desenvolvimento local não é enviado ao repositório.
+```text
+DATABASE_URL
+```
+
+A aplicação utiliza operações SQL como:
+
+- `SELECT` para consulta
+- `INSERT` para inclusão
+- `UPDATE` para alteração das quantidades
+- `DELETE` para remoção de registros
+
+A combinação entre modelo e tamanho possui uma restrição `UNIQUE`, evitando registros duplicados dessa combinação.
+
+Durante a sincronização do estoque também é utilizado:
+
+```sql
+ON CONFLICT
+```
+
+permitindo atualizar registros existentes sem criar duplicações.
+
+## Deploy
+
+A aplicação Flask está hospedada no Render.
+
+A arquitetura de produção é:
+
+```text
+Usuário
+   |
+   v
+Render
+   |
+   v
+Flask
+   |
+   v
+DATABASE_URL
+   |
+   v
+Neon PostgreSQL
+```
+
+As credenciais do banco não são armazenadas diretamente no código.
+
+A conexão é configurada através das variáveis de ambiente do serviço de hospedagem.
+
+## Segurança das informações
+
+Arquivos e informações que não devem fazer parte do repositório público são ignorados através do `.gitignore`.
+
+Entre eles:
+
+```text
+.env
+Sistema Estoque.xlsb
+estoque.db
+.venv/
+venv/
+__pycache__/
+```
+
+Dessa forma, credenciais locais, ambientes virtuais, arquivos de estoque e bancos utilizados durante etapas anteriores do desenvolvimento não são enviados ao GitHub.
 
 ## Imagens dos produtos
 
-As imagens utilizadas na interface de consulta de estoque são usadas apenas para demonstração visual durante o desenvolvimento local do projeto.
+As imagens utilizadas durante o desenvolvimento servem apenas como demonstração visual.
 
-Por esse motivo, a pasta `static/imagens/` não está incluída no repositório e foi adicionada ao `.gitignore`.
+A aplicação não utiliza imagens oficiais ou proprietárias diretamente no repositório público.
 
-O sistema foi estruturado de forma que essas imagens possam ser utilizadas localmente nos cards de produtos sem que os arquivos sejam enviados ao GitHub.
-
-Em uma implementação futura, as imagens poderão ser substituídas por arquivos próprios, imagens autorizadas ou integradas a uma fonte oficial de dados.
+Em uma implementação futura, poderão ser utilizadas imagens próprias, autorizadas ou provenientes de uma integração oficial.
 
 ## Tecnologias utilizadas
 
 - Python
-- Pandas
 - Flask
-- SQLite
+- Pandas
+- PostgreSQL
+- Psycopg
 - SQL
 - HTML
 - CSS
 - Jinja
+- Gunicorn
 - Git
 - GitHub
+- Render
+- Neon
 
 ## Estrutura do projeto
 
@@ -137,13 +266,10 @@ projeto-excessos-estoque/
 |
 |-- app.py
 |-- importar_estoque.py
-|-- estoque.db
-|-- Sistema Estoque.xlsb
+|-- requirements.txt
 |
 |-- static/
-|   |-- style.css
-|   |
-|   `-- imagens/
+|   `-- style.css
 |
 |-- templates/
 |   |-- index.html
@@ -153,50 +279,58 @@ projeto-excessos-estoque/
 `-- README.md
 ```
 
-Alguns arquivos utilizados localmente, como a planilha de estoque, o banco de dados e as imagens de demonstração, são ignorados pelo Git e não fazem parte do repositório público.
+Arquivos utilizados somente localmente, como `Sistema Estoque.xlsb`, não fazem parte do repositório público.
 
-## Arquivos locais
+## Desenvolvimento local
 
-O arquivo `Sistema Estoque.xlsb` utilizado durante o desenvolvimento contém os dados de origem para a importação do estoque e não é enviado ao GitHub.
+Durante o desenvolvimento, a aplicação Flask pode ser executada utilizando:
 
-O arquivo `estoque.db` também é utilizado localmente e não faz parte do repositório.
-
-Esses arquivos estão configurados no `.gitignore`.
-
-## Atualização do estoque
-
-Atualmente, a atualização dos dados é realizada através do script:
-
-```text
-importar_estoque.py
+```bash
+flask --app app run --debug
 ```
 
-O script realiza a leitura da planilha, tratamento dos registros e sincronização das informações com o banco SQLite.
+O modo debug permite que alterações salvas durante o desenvolvimento sejam recarregadas automaticamente.
 
-Durante o desenvolvimento local, uma nova versão da planilha pode substituir o arquivo anterior mantendo o nome esperado pelo sistema. Ao executar novamente o script de importação, os dados são processados e as quantidades existentes podem ser atualizadas no banco.
-
-Em uma futura implantação da aplicação, o processo de atualização poderá ser adaptado para outras formas de integração, como upload de arquivos, acesso a arquivos compartilhados ou integração com uma fonte oficial de dados.
+A conexão com o PostgreSQL é definida através da variável de ambiente `DATABASE_URL`.
 
 ## Objetivo de aprendizado
 
-Este projeto também funciona como um ambiente prático de estudo.
+Este projeto funciona também como um ambiente prático de estudo.
 
-Durante o desenvolvimento estão sendo aplicados conceitos relacionados a:
+Durante seu desenvolvimento foram aplicados conceitos relacionados a:
 
 - Programação em Python
 - Manipulação e tratamento de dados com Pandas
-- Banco de dados SQLite
+- PostgreSQL
 - Consultas SQL
+- Integração com banco de dados remoto
 - Desenvolvimento back-end com Flask
-- Templates utilizando Jinja
-- Desenvolvimento front-end com HTML e CSS
-- Integração entre front-end, back-end e banco de dados
+- Templates com Jinja
+- HTML e CSS
 - Responsividade
-- Controle de versão com Git
-- Organização de projetos no GitHub
+- Variáveis de ambiente
+- Deploy de aplicações
+- Git e GitHub
+- Estruturação de projetos
+- Integração entre front-end, back-end e banco de dados
+
+## Próximos passos
+
+O projeto continuará sendo utilizado como ambiente de aprendizado e evolução.
+
+Entre os próximos estudos e melhorias estão:
+
+- JavaScript
+- Manipulação do DOM
+- Eventos e interações no front-end
+- Integração entre JavaScript e Flask
+- Desenvolvimento de APIs
+- Consumo de APIs com `fetch`
+- React
+- Evolução da interface e experiência de uso
 
 ## Status do projeto
 
-Em desenvolvimento.
+**Em desenvolvimento — aplicação publicada e banco de produção configurado.**
 
-Novas funcionalidades e melhorias de interface serão adicionadas conforme o avanço do projeto e dos estudos.
+A estrutura principal do sistema está funcional, incluindo movimentações, consulta de estoque, tratamento de dados, sincronização com PostgreSQL e deploy da aplicação.
